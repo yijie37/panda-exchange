@@ -14,6 +14,8 @@ pushd . >/dev/null
 
 for SRC in runtime/wasm
 do
+  echo $SRC
+  echo "$PROJECT_ROOT/$SRC"
   echo "${bold}Building webassembly binary in $SRC...${normal}"
   cd "$PROJECT_ROOT/$SRC"
 
