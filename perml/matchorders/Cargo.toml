@@ -14,6 +14,7 @@ srml-support = { git = "https://github.com/paritytech/substrate", default_featur
 srml-system = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 srml-balances = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 perml-tokens = { path = "../tokens", default_features = false}
+perml-pendingorders = { path = "../pendingorders", default_features = false}
 
 [features]
 default = ["std"]
@@ -27,4 +28,5 @@ std=[
     "srml-system/std",
     "srml-balances/std",
     "perml-tokens/std",
+    "perml-pendingorders/std",
 ]
