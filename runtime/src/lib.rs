@@ -207,6 +207,8 @@ impl tokens::Trait for Runtime {
 }
 
 impl pendingorders::Trait for Runtime {
+	type OrderId = u128;
+	type PriceType = u128;
 	type Event = Event;
 }
 

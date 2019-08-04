@@ -1,5 +1,5 @@
 [package]
-name = "perml-pendingorders"
+name = "perml-collections"
 version = "0.1.0"
 authors = ["Panda"]
 
@@ -11,13 +11,11 @@ parity-codec = { version = "3.5", default-features = false, features = ["derive"
 parity-codec-derive = { version = "2.0", default-features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 substrate-primitives = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 sr-std = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
-#sr-io = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
+#sr-io = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1'}
 sr-primitives = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 srml-support = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1'}
 srml-system = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 srml-balances = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
-perml-tokens = { path = "../tokens", default_features = false}
-perml-collections = { path = "../collections", default_features = false}
 
 [features]
 default = ["std"]
@@ -33,6 +31,4 @@ std=[
     "srml-support/std",
     "srml-system/std",
     "srml-balances/std",
-    "perml-tokens/std",
-    "perml-collections/std",
 ]
