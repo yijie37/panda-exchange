@@ -21,6 +21,7 @@ use runtime_primitives::traits::{SimpleArithmetic, Bounded, One, CheckedAdd, Che
 use parity_codec::{Encode, Decode};
 use system::ensure_signed;
 use sr_std::prelude::*;
+use parity_codec::alloc::borrow::Cow::Borrowed;
 
 /// The module's configuration trait.
 pub trait Trait: system::Trait {
@@ -42,7 +43,6 @@ pub struct Token<T: Trait> {
 	total_supply: T::TokenBalance,
 }
 
-
 decl_storage! {
 	trait Store for Module<T: Trait> as Tokens {
 		/// 每种token有一个唯一id
@@ -50,6 +50,8 @@ decl_storage! {
 
 		/// Token信息
 		pub TokenInfo get(token_info): map T::TokenId => Symbol;
+
+		pub SymbolPairs get(symbol_pairs): map (Symbol, Symbol) => Option<bool>;
 
 		/// 某个币种，某个AccountId的token balance
 		pub BalanceOf get(balance_of): map (T::AccountId, T::TokenId) => T::TokenBalance;
@@ -74,22 +76,27 @@ decl_module! {
 		fn deposit_event<T>() = default;
 
 		/// 发行token
-		fn issue(origin, symbol: Symbol, total_supply: T::TokenBalance)	-> Result {
+		pub fn issue(origin, symbol: Symbol, total_supply: T::TokenBalance)	-> Result {
 			Self::do_issue(origin, symbol, total_supply)
 		}
 
+		/// 注册交易对
+		pub fn register_symbol_pairs(origin, sym0: Symbol, sym1: Symbol) -> Result {
+			Self::do_register_symbol_pairs(origin, sym0, sym1)
+		}
+
 		/// 转移token
-		fn transfer(origin, to: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
+		pub fn transfer(origin, to: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 			Self::do_transfer(origin, to, symbol, value)
 		}
 
 		/// 冻结token
-		fn freeze(origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
+		pub fn freeze(origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 			Self::do_freeze(origin, acc, symbol, value)
 		}
 
 		/// 解冻token
-		fn unfreeze(origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
+		pub fn unfreeze(origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 			Self::do_unfreeze(origin, acc, symbol, value)
 		}
 	}
@@ -103,6 +110,9 @@ decl_event!(
 	{
 		/// 发行token
 		Issued(TokenId, Symbol, TokenBalance),
+
+		/// 注册交易对
+		SymbolPairRegisterd(Symbol, Symbol),
 
 		/// 转账事件
 		Transfered(Symbol, AccountId, AccountId, TokenBalance),
@@ -120,7 +130,7 @@ decl_event!(
 
 impl<T: Trait> Module<T> {
 	/// 发行token
-	pub fn do_issue(origin: T::Origin, symbol: Symbol, total_supply: T::TokenBalance)	-> Result {
+	fn do_issue(origin: T::Origin, symbol: Symbol, total_supply: T::TokenBalance)	-> Result {
 		let sender = ensure_signed(origin)?;
 
 		let token_id = Self::token_id();
@@ -136,6 +146,19 @@ impl<T: Trait> Module<T> {
 		<BalanceOf<T>>::insert((sender.clone(), token_id.clone()), total_supply);
 		<FreeToken<T>>::insert((sender.clone(), symbol.clone()), total_supply);
 		Self::deposit_event(RawEvent::Issued(token_id, symbol, total_supply));
+
+		Ok(())
+	}
+
+	fn do_register_symbol_pairs(origin: T::Origin, sym0: Symbol, sym1: Symbol) -> Result {
+		let sender = ensure_signed(origin)?;
+		let key = (sym0.clone(), sym1.clone());
+    let exists = match Self::symbol_pairs(&key) {
+			Some(b) => return Err("Symbol pair registered."),
+			None => true,
+		};
+		<SymbolPairs<T>>::insert(key, Borrowed(&true));
+		Self::deposit_event(RawEvent::SymbolPairRegisterd(sym0, sym1));
 
 		Ok(())
 	}
@@ -166,7 +189,7 @@ impl<T: Trait> Module<T> {
 
 	fn do_freeze(origin: T::Origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 		let sender = ensure_signed(origin)?;
-//		assert_eq!(sender == acc, "Can not freeze other's token");
+		assert!(sender == acc, "Can not freeze other's token");
 
 		let key = (acc.clone(), symbol.clone());
 		let free_token = Self::free_token(&key);
@@ -189,7 +212,7 @@ impl<T: Trait> Module<T> {
 
 	fn do_unfreeze(origin: T::Origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 		let sender = ensure_signed(origin)?;
-//		assert_eq!(sender == acc, "Can not unfreeze other's token");
+		assert!(sender == acc, "Can not unfreeze other's token");
 
 		let key = (acc.clone(), symbol.clone());
 		let free_token = Self::free_token(&key);
@@ -209,6 +232,8 @@ impl<T: Trait> Module<T> {
 
 		Ok(())
 	}
+
+
 
 }
 
