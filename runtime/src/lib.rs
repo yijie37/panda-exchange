@@ -62,7 +62,7 @@ mod template;
 //mod pendingorders;
 //mod matchorders;
 extern crate perml_tokens as tokens;
-extern crate perml_pendingorders as pendingorders;
+//extern crate perml_pendingorders as pendingorders;
 extern crate perml_matchorders as matchorders;
 
 
@@ -206,11 +206,11 @@ impl tokens::Trait for Runtime {
 	type Event = Event;
 }
 
-impl pendingorders::Trait for Runtime {
-	type OrderId = u128;
-	type PriceType = u128;
-	type Event = Event;
-}
+//impl pendingorders::Trait for Runtime {
+//	type OrderId = u128;
+//	type PriceType = u128;
+//	type Event = Event;
+//}
 
 impl matchorders::Trait for Runtime {
 	type Event = Event;
@@ -232,7 +232,7 @@ construct_runtime!(
 		// Used for the module template in `./template.rs`
 		TemplateModule: template::{Module, Call, Storage, Event<T>},
 		Tokens: tokens::{Module, Call, Storage, Event<T>},
-		Pendingorders: pendingorders::{Module, Call, Storage, Event<T>},
+//		Pendingorders: pendingorders::{Module, Call, Storage, Event<T>},
 		Matchorders: matchorders::{Module, Call, Storage, Event<T>},
 
 	}
