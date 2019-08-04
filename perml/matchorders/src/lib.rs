@@ -20,7 +20,7 @@ use system::ensure_signed;
 use sr_std::prelude::*;
 
 pub trait Trait: system::Trait {
-	// TODO: Add other types and constants required configure this module.
+	// TODO: Add other types and constants required configuModulere this module.
 
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
@@ -45,7 +45,7 @@ decl_module! {
 		// function that can be called by the external world as an extrinsics call
 		// takes a parameter of the type `AccountId`, stores it and emits an event
 		pub fn do_something(origin, something: u32) -> Result {
-			// TODO: You only need this if you want to check it was signed.
+			// TODO: You only need this if you want to checModulek it was signed.
 			let who = ensure_signed(origin)?;
 
 			// TODO: Code to execute when something calls this.
@@ -106,7 +106,7 @@ mod tests {
 	}
 	impl Trait for Test {
 		type Event = ();
-	}
+mac	}
 	type matchorders = Module<Test>;
 
 	// This function basically just builds a genesis storage key/value store according to

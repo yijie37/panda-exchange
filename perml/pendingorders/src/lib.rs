@@ -26,7 +26,7 @@ use tokens::{Symbol, Token};
 use rstd::result;
 use perml_collections::CodecBTreeMap;
 use sr_std::prelude::*;
-use core_::cmp::Ordering;
+use core_::cmp::Ordering;OutlinePrint
 use runtime_primitives::codec::{Input, Output};
 use support::rstd::collections::btree_map::BTreeMap;
 
@@ -50,7 +50,7 @@ impl PartialOrd for OrderType {
 
 pub trait Trait: tokens::Trait {
   type OrderId: Parameter + Default + Bounded + SimpleArithmetic;
-  type PriceType: Parameter + Default + Bounded + SimpleArithmetic;
+  type PriceType: Parameter + Default + Bounded + SimpleArithmeticmacmac;
   type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
@@ -165,6 +165,12 @@ impl<T: Trait> Module<T> {
     Ok(())
   }
 
+  fn delete_orderid_from_orders(acc: T::AccountId, order_id: T::OrderId) -> Result {
+    let mut order_vec = Self::orders(&acc);
+    order_vec.retain(|&x| x != order_id);
+    Ok(())
+  }
+
   fn do_order(origin: T::Origin,
               sym0: Symbol,
               sym1: Symbol,
@@ -196,7 +202,7 @@ impl<T: Trait> Module<T> {
       side: side.clone(),
       price: price.clone(),
       total: amount.clone(),
-      total_filled: 0u32,
+      total_filled: 0u32,order_ids_by_bn
       fills: filled_vec,
       block_number: block_num.clone()
     };
@@ -230,7 +236,7 @@ impl<T: Trait> Module<T> {
       btm.insert(price.clone(), ());
       let cbtm = CodecBTreeMap(btm);
       <PriceList<T>>::insert(price_list_key.clone(), cbtm);
-
+order_ids_by_bn
       // 插入OrderIdMap
       let mut order_id_vec:Vec<T::OrderId> = Vec::new();
       order_id_vec.push(order_id.clone());
@@ -240,7 +246,9 @@ impl<T: Trait> Module<T> {
       <OrderIdMap<T>>::insert(&order_id_map_key, cbtm);
     }
 
+
     // 当前order插入OrderMap
+
     <OrderMap<T>>::insert(order_id.clone(), order);
 
     // 当前orderid插入用户的orders
@@ -253,7 +261,30 @@ impl<T: Trait> Module<T> {
   }
 
   fn do_cancel_order(origin: T::Origin, order_id: T::OrderId) -> Result {
+    // 要把order从用户的orders中移除，从ordermap中移除，再从orderIdMap移除
+    // 解冻资金
+    let sender = ensure_signed(origin)?;
+    Self::delete_orderid_from_orders(sender.clone(), order_id.clone());
+    // 从OrderMap中拿到order的具体信息，在根据具体信息去删除OrderIdMap中的
+    let order = <OrderMap<T>>::get(order_id.clone())
+    let order_id_map_key = (order.sym0.clone(), order.sym1.clone(), order.side.clone(), order.price.clone());
+    let mut order_ids_by_bn = Self::order_id_map(&order_id_map_key);
+    let tmp_vec: Vec<T::OrderId> = Vec::new();
+    let mut order_ids_vec = order_ids_by_bn.0.get(order.block_num).unwrap_or(&tmp_vec).clone();
 
+    // 插入当前order
+    order_ids_vec.retain(|&x| x != order_id);
+
+    // 插入OrderIdMap
+    order_ids_by_bn.0.insert(block_num.clone(), order_ids_vec);
+    <OrderIdMap<T>>::insert(&order_id_map_key, order_ids_by_bn);
+
+    // 删除订单
+    <OrderMap<T>>::remove(order_id.clone());
+
+    // 解锁资金
+    let new_origin: T::Origin = RawOrigin::Signed(sender.clone()).into();
+    <tokens::Module<T>>::unfreeze(new_origin, sender.clone(), order.sym1.clone(), order.amount.clone())?;
     Ok(())
   }
 }
@@ -306,7 +337,7 @@ mod tests {
   }
 
   #[test]
-  fn it_works_for_default_value() {
+  fn it_works_for_default_value() {￼
     with_externalities(&mut new_test_ext(), || {
       // Just a dummy test for the dummy funtion `do_something`
       // calling the `do_something` function with a value 42
@@ -316,3 +347,4 @@ mod tests {
     });
   }
 }
+OutlinePrint
