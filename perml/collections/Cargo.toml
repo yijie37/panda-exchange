@@ -5,30 +5,14 @@ authors = ["Panda"]
 
 [dependencies]
 hex-literal = "0.1.0"
-#serde = { version = "1.0.97", default_features = false, optional = true }
-#serde_derive = { version = "1.0.97", default_features = false}
 parity-codec = { version = "3.5", default-features = false, features = ["derive"]}
-parity-codec-derive = { version = "2.0", default-features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
-substrate-primitives = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 sr-std = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
-#sr-io = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1'}
-sr-primitives = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 srml-support = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1'}
-srml-system = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
-srml-balances = { git = "https://github.com/paritytech/substrate", default_features = false, rev = 'fc206f3a009b64fc746202e5b4c701bf7e24d1f1' }
 
 [features]
 default = ["std"]
 std=[
-#    "serde/std",
-#    "serde_derive/std",
     "parity-codec/std",
-    "parity-codec-derive/std",
-    "substrate-primitives/std",
     "sr-std/std",
-#    "sr-io/std",
-    "sr-primitives/std",
     "srml-support/std",
-    "srml-system/std",
-    "srml-balances/std",
 ]

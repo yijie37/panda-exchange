@@ -15,6 +15,7 @@ extern crate sr_primitives as runtime_primitives;
 extern crate parity_codec;
 extern crate srml_system as system;
 extern crate sr_std;
+extern crate core as core_;
 extern crate perml_collections;
 
 use support::{decl_module, decl_storage, decl_event, StorageMap, StorageValue, dispatch::Result, Parameter, rstd};
@@ -22,12 +23,12 @@ use runtime_primitives::traits::{SimpleArithmetic, Bounded, One, CheckedAdd, Che
 use parity_codec::{Encode, Decode};
 use system::{ensure_signed, RawOrigin};
 use tokens::{Symbol, Token};
-use sr_std::prelude::*;
 use rstd::result;
-use rstd::collections::btree_map::BTreeMap;
 use perml_collections::CodecBTreeMap;
-use std::cmp::Ordering;
-//use parity_codec::alloc::collections::BTreeMap;
+use sr_std::prelude::*;
+use core_::cmp::Ordering;
+use runtime_primitives::codec::{Input, Output};
+use support::rstd::collections::btree_map::BTreeMap;
 
 #[derive(Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub enum OrderType {
@@ -90,22 +91,22 @@ pub struct Order<T: Trait> {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as pendingorders {
-		/// 每个挂单的唯一id
+		// 每个挂单的唯一id
 		pub OrderSeq get(order_id): T::OrderId;
 
-		/// (交易对, 交易方向) => 有序挂单价
+		// (交易对, 交易方向) => 有序挂单价
 		pub PriceList get(price_list): map (Symbol, Symbol, OrderType) => CodecBTreeMap<T::PriceType, ()>;
 
-		/// (交易对, 交易方向，挂单价） => blocknum有序的挂单id列表
+		// (交易对, 交易方向，挂单价） => blocknum有序的挂单id列表
 		pub OrderIdMap get(order_id_map): map(Symbol, Symbol, OrderType, T::PriceType) => CodecBTreeMap<BlockNumber<T>, Vec<T::OrderId>>;
 
-		/// order_id => Order
+		// order_id => Order
 		pub OrderMap get(order_map): map T::OrderId => Option<Order<T>>;
 
-		/// OrderId 属于哪个用户
+		// OrderId 属于哪个用户
 		pub OrderOf get(order_of): map T::OrderId => T::AccountId;
 
-		/// 某个用户的所有order
+		// 某个用户的所有order
 		pub Orders get(orders): map T::AccountId => Vec<T::OrderId>;
 	}
 }
@@ -114,7 +115,7 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		fn deposit_event<T>() = default;
 
-		/// 挂单
+		// 挂单
 		pub fn order(origin,
 								 sym0: Symbol,
 								 sym1: Symbol,
@@ -126,11 +127,10 @@ decl_module! {
 			Self::do_order(origin, sym0, sym1, price, amount, side)
 		}
 
-		/// 取消挂单
+		// 取消挂单
 		pub fn cancel_order(origin, order_id: T::OrderId) -> Result {
 			Self::do_cancel_order(origin, order_id)
 		}
-
 	}
 }
 
@@ -141,10 +141,10 @@ decl_event!(
 		<T as self::Trait>::PriceType,
 		TokenBalance = TokenBalanceOf<T>
 	{
-		/// 挂单事件
+		// 挂单事件
 		Ordered(AccountId, Symbol, Symbol, PriceType, TokenBalance, OrderType),
 
-		/// 取消挂单事件
+		// 取消挂单事件
 		OrderCanceled(AccountId, OrderId),
 	}
 );
@@ -158,7 +158,7 @@ impl<T: Trait> Module<T> {
   }
 
   fn insert_orderid_to_orders(acc: T::AccountId, order_id: T::OrderId) -> Result{
-    /// 某个用户的所有order
+    // 某个用户的所有order
     let mut order_vec = Self::orders(&acc);
     order_vec.push(order_id);
     <Orders<T>>::insert(acc, order_vec);
@@ -173,19 +173,18 @@ impl<T: Trait> Module<T> {
               side: OrderType) -> Result
   {
     let sender = ensure_signed(origin)?;
-//    let new_origin: T::Origin = RawOrigin::from(Some(sender.clone()));
     let new_origin: T::Origin = RawOrigin::Signed(sender.clone()).into();
 
-    /// 检查交易对是否已注册
+    // 检查交易对是否已注册
     let symbols = (sym0.clone(), sym1.clone());
     <tokens::Module<T>>::symbol_pairs(symbols).ok_or("Symbol pair not registered")?;
 
-    /// 检查余额是否足够
+    // 检查余额是否足够
     let token_key = (sender.clone(), sym1.clone());
     let free_token = <tokens::Module<T>>::free_token(token_key);
     assert!(free_token > amount, "Insufficient tokens to order");
 
-    /// 构造order
+    // 构造order
     let order_id = Self::next_order_id()?;
     let filled_vec:Vec<Filled<T>> = Vec::new();
     let block_num = <system::Module<T>>::block_number();
@@ -202,10 +201,10 @@ impl<T: Trait> Module<T> {
       block_number: block_num.clone()
     };
 
-    /// 冻结资金
+    // 冻结资金
     <tokens::Module<T>>::freeze(new_origin, sender.clone(), sym1.clone(), amount.clone())?;
 
-    /// 检查price
+    // 检查price
     let price_list_key = (sym0.clone(), sym1.clone(), side.clone());
     let prices = Self::price_list(price_list_key.clone());
     let order_id_map_key = (sym0.clone(), sym1.clone(), side.clone(), price.clone());
@@ -244,7 +243,7 @@ impl<T: Trait> Module<T> {
     // 当前order插入OrderMap
     <OrderMap<T>>::insert(order_id.clone(), order);
 
-    // 当前order插入用户的orders
+    // 当前orderid插入用户的orders
     Self::insert_orderid_to_orders(sender.clone(), order_id.clone());
 
 

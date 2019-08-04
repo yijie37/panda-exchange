@@ -1,4 +1,4 @@
-//#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 /// A runtime module template with necessary imports
 
 /// Feel free to remove or edit this file as needed.
@@ -9,14 +9,14 @@
 /// For more guidance on Substrate modules, see the example module
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
 
-//extern crate parity_codec;
 
-//use sr_std::prelude::*;
+//extern crate sr_std;
 extern crate srml_support as support;
 extern crate parity_codec as codec;
 
 use codec::{Decode, Encode, Input, Output};
 use support::rstd::collections::btree_map::BTreeMap;
+//use sr_std::prelude::*;
 
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]

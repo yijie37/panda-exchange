@@ -21,21 +21,20 @@ use runtime_primitives::traits::{SimpleArithmetic, Bounded, One, CheckedAdd, Che
 use parity_codec::{Encode, Decode};
 use system::ensure_signed;
 use sr_std::prelude::*;
-use parity_codec::alloc::borrow::Cow::Borrowed;
 
-/// The module's configuration trait.
 pub trait Trait: system::Trait {
-	/// Token id type.
+	// Token id type.
 	type TokenId: Parameter + Default + Bounded + SimpleArithmetic;
 
-  /// Token balance type.
+  // Token balance type.
   type TokenBalance: Parameter + Default + Bounded + SimpleArithmetic + Copy;
 
-	/// The overarching event type.
+	// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
 pub type Symbol = Vec<u8>;
+
 
 #[derive(Encode, Decode, Default, PartialEq, Clone)]
 pub struct Token<T: Trait> {
@@ -45,57 +44,58 @@ pub struct Token<T: Trait> {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as Tokens {
-		/// 每种token有一个唯一id
+		// 每种token有一个唯一id
 		pub TokenSeq get(token_id): T::TokenId;
 
-		/// Token信息
+		// Token信息
 		pub TokenInfo get(token_info): map T::TokenId => Symbol;
 
-		pub SymbolPairs get(symbol_pairs): map (Symbol, Symbol) => Option<bool>;
+		// 已注册交易对
+		pub SymbolPairs get(symbol_pairs): map (Symbol, Symbol) => Option<T::AccountId>;
 
-		/// 某个币种，某个AccountId的token balance
+		// 某个币种，某个AccountId的token balance
 		pub BalanceOf get(balance_of): map (T::AccountId, T::TokenId) => T::TokenBalance;
 
-		/// 某个币种，某个AccountId的allowance
+		// 某个币种，某个AccountId的allowance
 		pub Allowance get(allowance): map (T::AccountId, T::TokenId) => T::TokenBalance;
 
-		/// 某个账号，某个token的 free token
+		// 某个账号，某个token的 free token
 		pub FreeToken get(free_token): map (T::AccountId, Symbol)	=> T::TokenBalance;
 
-		/// 某个账号，某个token的 freezed token
+		// 某个账号，某个token的 freezed token
 		pub FreezedToken get(freezed_token): map (T::AccountId, Symbol) => T::TokenBalance;
 
-		/// 某个账号所有的token列表
+		// 某个账号所有的token列表
 		pub OwnedTokenList get(owned_token_list): map T::AccountId => Vec<Symbol>;
 	}
 }
 
 decl_module! {
-	/// The module declaration.
+	// The module declaration.
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		fn deposit_event<T>() = default;
 
-		/// 发行token
+		// 发行token
 		pub fn issue(origin, symbol: Symbol, total_supply: T::TokenBalance)	-> Result {
 			Self::do_issue(origin, symbol, total_supply)
 		}
 
-		/// 注册交易对
-		pub fn register_symbol_pairs(origin, sym0: Symbol, sym1: Symbol) -> Result {
-			Self::do_register_symbol_pairs(origin, sym0, sym1)
-		}
+		// 注册交易对
+//		pub fn register_symbol_pairs(origin, sym0: Symbol, sym1: Symbol) -> Result {
+//			Self::do_register_symbol_pairs(origin, sym0, sym1)
+//		}
 
-		/// 转移token
+		// 转移token
 		pub fn transfer(origin, to: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 			Self::do_transfer(origin, to, symbol, value)
 		}
 
-		/// 冻结token
+		// 冻结token
 		pub fn freeze(origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 			Self::do_freeze(origin, acc, symbol, value)
 		}
 
-		/// 解冻token
+		// 解冻token
 		pub fn unfreeze(origin, acc: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 			Self::do_unfreeze(origin, acc, symbol, value)
 		}
@@ -108,29 +108,30 @@ decl_event!(
 		<T as self::Trait>::TokenId,
 		<T as self::Trait>::TokenBalance,
 	{
-		/// 发行token
+		// 发行token
 		Issued(TokenId, Symbol, TokenBalance),
 
-		/// 注册交易对
+		// 注册交易对
 		SymbolPairRegisterd(Symbol, Symbol),
 
-		/// 转账事件
+		// 转账事件
 		Transfered(Symbol, AccountId, AccountId, TokenBalance),
 
-		/// approve事件
+		// approve事件
 		Approval(TokenId, AccountId, AccountId, TokenBalance),
 
-		/// Freeze事件
+		// Freeze事件
 		Freezed(AccountId, Symbol, TokenBalance),
 
-		/// Unfreeze事件
+		// Unfreeze事件
 		Unfreezed(AccountId, Symbol, TokenBalance),
 	}
 );
 
 impl<T: Trait> Module<T> {
-	/// 发行token
-	fn do_issue(origin: T::Origin, symbol: Symbol, total_supply: T::TokenBalance)	-> Result {
+	// 发行token
+	fn do_issue(origin: T::Origin, symbol: Symbol, total_supply: T::TokenBalance) -> Result
+		{
 		let sender = ensure_signed(origin)?;
 
 		let token_id = Self::token_id();
@@ -150,18 +151,19 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	fn do_register_symbol_pairs(origin: T::Origin, sym0: Symbol, sym1: Symbol) -> Result {
-		let sender = ensure_signed(origin)?;
-		let key = (sym0.clone(), sym1.clone());
-    let exists = match Self::symbol_pairs(&key) {
-			Some(b) => return Err("Symbol pair registered."),
-			None => true,
-		};
-		<SymbolPairs<T>>::insert(key, Borrowed(&true));
-		Self::deposit_event(RawEvent::SymbolPairRegisterd(sym0, sym1));
-
-		Ok(())
-	}
+//	fn do_register_symbol_pairs(origin: T::Origin, sym0: Symbol, sym1: Symbol) -> Result
+//	{
+//		let sender = ensure_signed(origin)?;
+//		let key = (sym0.clone(), sym1.clone());
+//    let exists = match Self::symbol_pairs(&key) {
+//			Some(u) => return Err("Symbol pair registered."),
+//			None => sender.clone(),
+//		};
+//		<SymbolPairs<T>>::insert(key, Some(&sender));
+//		Self::deposit_event(RawEvent::SymbolPairRegisterd(sym0, sym1));
+//
+//		Ok(())
+//	}
 
 	fn do_transfer(origin: T::Origin, to: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 		let sender = ensure_signed(origin)?;
