@@ -17,7 +17,7 @@ extern crate sr_std;
 
 
 use support::{decl_module, decl_storage, decl_event, StorageMap, StorageValue, dispatch::Result, Parameter};
-use runtime_primitives::traits::{SimpleArithmetic, Bounded, One, CheckedAdd, CheckedSub};
+use runtime_primitives::traits::{SimpleArithmetic, Bounded, One, CheckedAdd, CheckedSub, Zero, As};
 use parity_codec::{Encode, Decode};
 use system::ensure_signed;
 use sr_std::prelude::*;
@@ -27,7 +27,7 @@ pub trait Trait: system::Trait {
 	type TokenId: Parameter + Default + Bounded + SimpleArithmetic;
 
   // Token balance type.
-  type TokenBalance: Parameter + Default + Bounded + SimpleArithmetic + Copy;
+  type TokenBalance: Parameter + Default + Bounded + SimpleArithmetic + Copy + Zero + As<u128>;
 
 	// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
@@ -51,7 +51,7 @@ decl_storage! {
 		pub TokenInfo get(token_info): map T::TokenId => Symbol;
 
 		// 已注册交易对
-		pub SymbolPairs get(symbol_pairs): map (Symbol, Symbol) => Option<T::AccountId>;
+		pub SymbolPairs get(symbol_pairs): map u32 => Vec<(Symbol, Symbol)>;
 
 		// 某个币种，某个AccountId的token balance
 		pub BalanceOf get(balance_of): map (T::AccountId, T::TokenId) => T::TokenBalance;
@@ -81,9 +81,9 @@ decl_module! {
 		}
 
 		// 注册交易对
-//		pub fn register_symbol_pairs(origin, sym0: Symbol, sym1: Symbol) -> Result {
-//			Self::do_register_symbol_pairs(origin, sym0, sym1)
-//		}
+		pub fn register_symbol_pairs(origin, sym0: Symbol, sym1: Symbol) -> Result {
+			Self::do_register_symbol_pairs(origin, sym0, sym1)
+		}
 
 		// 转移token
 		pub fn transfer(origin, to: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
@@ -130,8 +130,7 @@ decl_event!(
 
 impl<T: Trait> Module<T> {
 	// 发行token
-	fn do_issue(origin: T::Origin, symbol: Symbol, total_supply: T::TokenBalance) -> Result
-		{
+	fn do_issue(origin: T::Origin, symbol: Symbol, total_supply: T::TokenBalance) -> Result {
 		let sender = ensure_signed(origin)?;
 
 		let token_id = Self::token_id();
@@ -151,19 +150,19 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-//	fn do_register_symbol_pairs(origin: T::Origin, sym0: Symbol, sym1: Symbol) -> Result
-//	{
-//		let sender = ensure_signed(origin)?;
-//		let key = (sym0.clone(), sym1.clone());
-//    let exists = match Self::symbol_pairs(&key) {
-//			Some(u) => return Err("Symbol pair registered."),
-//			None => sender.clone(),
-//		};
-//		<SymbolPairs<T>>::insert(key, Some(&sender));
-//		Self::deposit_event(RawEvent::SymbolPairRegisterd(sym0, sym1));
-//
-//		Ok(())
-//	}
+	fn do_register_symbol_pairs(origin: T::Origin, sym0: Symbol, sym1: Symbol) -> Result {
+		let sender = ensure_signed(origin)?;
+		let key = (sym0.clone(), sym1.clone());
+    let mut symbol_pair_vec: Vec<(Symbol, Symbol)> = Self::symbol_pairs(&1u32);
+
+		if !symbol_pair_vec.contains(&key) {
+			symbol_pair_vec.push(key);
+		}
+		<SymbolPairs<T>>::insert(1u32, symbol_pair_vec);
+		Self::deposit_event(RawEvent::SymbolPairRegisterd(sym0, sym1));
+
+		Ok(())
+	}
 
 	fn do_transfer(origin: T::Origin, to: T::AccountId, symbol: Symbol, value: T::TokenBalance) -> Result {
 		let sender = ensure_signed(origin)?;
@@ -234,9 +233,6 @@ impl<T: Trait> Module<T> {
 
 		Ok(())
 	}
-
-
-
 }
 
 /// tests for this module
