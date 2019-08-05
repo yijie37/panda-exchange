@@ -35,14 +35,6 @@ pub trait Trait: tokens::Trait + pendingorders::Trait {
 }
 
 // TODO
-// 逻辑移动到 on_finalize里
-//impl<T: Trait> OnFinalize<T::BlockNumber> for Module<T> {
-//	fn on_finalize(time: T::BlockNumber) {
-//		let a: u32 = 0u32;
-//	}
-//}
-
-// TODO
 // 改变pendingorders状态
 
 decl_storage! {
@@ -55,8 +47,12 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 		fn deposit_event<T>() = default;
 
-		fn match_orders(origin) -> Result {
-			Self::do_match_orders(origin)
+		fn match_orders() -> Result {
+			Self::do_match_orders()
+		}
+
+		fn on_finalize(time: T::BlockNumber) {
+			Self::match_orders();
 		}
 	}
 }
@@ -64,7 +60,7 @@ decl_module! {
 impl<T: Trait> Module<T> {
 
 	//匹配
-	fn do_match_orders(origin: T::Origin) -> Result {
+	fn do_match_orders() -> Result {
 		// 循环所有交易对
 		let symbol_pair_vec: Vec<(Symbol, Symbol)> = <tokens::Module<T>>::symbol_pairs(&1u32);
     for symbol_pair in symbol_pair_vec {
@@ -90,7 +86,7 @@ impl<T: Trait> Module<T> {
 			// 卖单按价格从低到高匹配
       for (i, seller_price) in seller_prices.iter().enumerate() {
 				if seller_price > buyer_price {
-					break;
+						break;
 				}
 				let finish_the_buyer = Self::match_one_buyer_price(buyer_price.clone(), seller_price.clone(), sym0.clone(), sym1.clone());
         if finish_the_buyer {
@@ -122,7 +118,6 @@ impl<T: Trait> Module<T> {
 
 	// 匹配一个买单
 	fn match_one_buyer_order_id(buyer_order_id: T::OrderId, seller_price: PriceType<T>, sym0: Symbol, sym1: Symbol) -> bool {
-
 
 		let seller_order_id_map_key = (sym0.clone(), sym1.clone(), OrderType::Sell, seller_price);
 		let seller_bn_btreemap = <pendingorders::Module<T>>::order_id_map(seller_order_id_map_key);
